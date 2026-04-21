@@ -1,0 +1,70 @@
+{
+  "default_policy": {
+    "policy_number": "POL-DEFAULT-001",
+    "policy_type": "Individual Health Insurance",
+    "sum_insured": 500000,
+    "coverage_start_date": "2024-01-01",
+    "coverage_end_date": "2024-12-31",
+    "waiting_period": {
+      "general": 30,
+      "pre_existing": 90,
+      "maternity": 180
+    },
+    "deductible": {
+      "amount": 5000,
+      "type": "annual"
+    },
+    "co_payment": {
+      "percentage": 10,
+      "applicable_after": "deductible"
+    },
+    "room_rent_limits": {
+      "general_ward": 5000,
+      "semi_private": 10000,
+      "private": 15000,
+      "icu": 25000
+    },
+    "coverage_limits": {
+      "hospitalization": 500000,
+      "pre_hospitalization": 50000,
+      "post_hospitalization": 50000,
+      "day_care": 100000,
+      "dental": 25000,
+      "ophthalmic": 25000,
+      "alternative_treatments": 50000
+    },
+    "exclusions": [
+      "cosmetic procedures",
+      "experimental treatments",
+      "self-inflicted injuries",
+      "war injuries",
+      "nuclear contamination",
+      "congenital diseases",
+      "infertility treatments",
+      "weight loss treatments"
+    ],
+    "covered_icd_chapters": [
+      "I: Certain infectious and parasitic diseases",
+      "II: Neoplasms",
+      "III: Diseases of the blood and blood-forming organs",
+      "IV: Endocrine, nutritional and metabolic diseases",
+      "V: Mental and behavioural disorders",
+      "VI: Diseases of the nervous system",
+      "VII: Diseases of the eye and adnexa",
+      "VIII: Diseases of the ear and mastoid process",
+      "IX: Diseases of the circulatory system",
+      "X: Diseases of the respiratory system",
+      "XI: Diseases of the digestive system",
+      "XII: Diseases of the skin and subcutaneous tissue",
+      "XIII: Diseases of the musculoskeletal system and connective tissue",
+      "XIV: Diseases of the genitourinary system",
+      "XV: Pregnancy, childbirth and the puerperium",
+      "XVI: Certain conditions originating in the perinatal period",
+      "XVII: Congenital malformations, deformations and chromosomal abnormalities",
+      "XVIII: Symptoms, signs and abnormal clinical findings",
+      "XIX: Injury, poisoning and certain other consequences of external causes",
+      "XX: External causes of morbidity and mortality",
+      "XXI: Factors influencing health status and contact with health services"
+    ]
+  }
+}

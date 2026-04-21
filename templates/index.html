@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Claim Document Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .processing-overlay {
+            backdrop-filter: blur(4px);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .document-card {
+            transition: all 0.3s ease;
+        }
+        .document-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="file-text" class="w-8 h-8 text-blue-600"></i>
+                    <h1 class="text-2xl font-bold text-gray-900">Health Claim Document Intelligence</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">AI-Powered Document Processing</span>
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Upload Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i data-lucide="upload-cloud" class="w-5 h-5 mr-2 text-blue-600"></i>
+                Upload Medical Documents
+            </h2>
+            
+            <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50">
+                <i data-lucide="file-plus" class="w-12 h-12 mx-auto text-gray-400 mb-4"></i>
+                <p class="text-lg font-medium text-gray-700 mb-2">Drop files here or click to browse</p>
+                <p class="text-sm text-gray-500">Support for PDF, JPG, PNG files (Max 10MB)</p>
+                <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+            </div>
+            
+            <!-- File List -->
+            <div id="fileList" class="mt-4 space-y-2"></div>
+            
+            <!-- Processing Options -->
+            <div class="mt-4 flex space-x-4">
+                <button id="processAllBtn" class="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i data-lucide="play" class="w-4 h-4 inline mr-2"></i>
+                    Process Documents
+                </button>
+                <button id="adjudicateClaimBtn" class="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i data-lucide="gavel" class="w-4 h-4 inline mr-2"></i>
+                    Adjudicate Claim
+                </button>
+            </div>
+            
+            <!-- Claim Details Form (Hidden by default) -->
+            <div id="claimDetailsForm" class="mt-4 hidden">
+                <div class="border-t pt-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center">
+                        <i data-lucide="user" class="w-5 h-5 mr-2 text-green-600"></i>
+                        Claim Information
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Claim ID</label>
+                            <input type="text" id="claimId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Auto-generated">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Policy Number</label>
+                            <input type="text" id="policyNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="POL-DEFAULT-001">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
+                            <input type="text" id="patientName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Patient Name">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button id="submitClaimBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors">
+                            <i data-lucide="gavel" class="w-4 h-4 inline mr-2"></i>
+                            Submit Claim for Adjudication
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden">
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Total Documents</p>
+                            <p id="totalDocs" class="text-2xl font-bold text-gray-900">0</p>
+                        </div>
+                        <i data-lucide="files" class="w-8 h-8 text-blue-600"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Successfully Processed</p>
+                            <p id="processedDocs" class="text-2xl font-bold text-green-600">0</p>
+                        </div>
+                        <i data-lucide="check-circle" class="w-8 h-8 text-green-600"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Fraud Alerts</p>
+                            <p id="fraudAlerts" class="text-2xl font-bold text-red-600">0</p>
+                        </div>
+                        <i data-lucide="alert-triangle" class="w-8 h-8 text-red-600"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-500">Readability Score</p>
+                            <p id="avgReadability" class="text-2xl font-bold text-yellow-600">0%</p>
+                        </div>
+                        <i data-lucide="eye" class="w-8 h-8 text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Results -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                    <i data-lucide="file-text" class="w-5 h-5 mr-2 text-blue-600"></i>
+                    Processing Results
+                </h3>
+                <div id="documentResults" class="space-y-4"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 processing-overlay z-50">
+        <div class="flex items-center justify-center h-full">
+            <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-lg font-medium text-gray-900 mb-2">Processing Documents...</p>
+                    <p class="text-sm text-gray-500">Please wait while we analyze your documents</p>
+                    <div id="processingProgress" class="mt-4 text-sm text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Global state
+        let uploadedFiles = [];
+        let processedResults = [];
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const processAllBtn = document.getElementById('processAllBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const processingOverlay = document.getElementById('processingOverlay');
+        const processingProgress = document.getElementById('processingProgress');
+
+        // Upload functionality
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification('File size exceeds 10MB limit', 'error');
+                    return;
+                }
+                
+                const fileId = Date.now() + '_' + file.name;
+                uploadedFiles.push({
+                    id: fileId,
+                    file: file,
+                    name: file.name,
+                    size: formatFileSize(file.size),
+                    type: file.type
+                });
+            });
+            
+            updateFileList();
+            processAllBtn.disabled = uploadedFiles.length === 0;
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = uploadedFiles.map(file => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg fade-in">
+                    <div class="flex items-center space-x-3">
+                        <i data-lucide="file" class="w-5 h-5 text-gray-400"></i>
+                        <div>
+                            <p class="font-medium text-gray-900">${file.name}</p>
+                            <p class="text-sm text-gray-500">${file.size} • ${file.type}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeFile('${file.id}')" class="text-red-500 hover:text-red-700">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function removeFile(fileId) {
+            uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
+            updateFileList();
+            processAllBtn.disabled = uploadedFiles.length === 0;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Process documents
+        processAllBtn.addEventListener('click', processAllDocuments);
+        
+        // Claim adjudication
+        adjudicateClaimBtn.addEventListener('click', adjudicateClaim);
+        submitClaimBtn.addEventListener('click', adjudicateClaim);
+
+        async function processAllDocuments() {
+            if (uploadedFiles.length === 0) return;
+            
+            showProcessing();
+            processedResults = [];
+            
+            for (let i = 0; i < uploadedFiles.length; i++) {
+                const fileData = uploadedFiles[i];
+                processingProgress.textContent = `Processing ${i + 1} of ${uploadedFiles.length}: ${fileData.name}`;
+                
+                try {
+                    const result = await processDocument(fileData);
+                    processedResults.push(result);
+                } catch (error) {
+                    processedResults.push({
+                        ...fileData,
+                        error: error.message,
+                        status: 'error'
+                    });
+                }
+            }
+            
+            hideProcessing();
+            displayResults();
+            updateStatistics();
+            
+            // Enable adjudicate claim button after processing is complete
+            adjudicateClaimBtn.disabled = false;
+        }
+
+        async function processDocument(fileData) {
+            const formData = new FormData();
+            formData.append('file', fileData.file);
+            
+            const response = await fetch('/process-medical-document', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Processing failed: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            // Perform additional checks
+            const readabilityScore = calculateReadability(result.extracted_fields);
+            const fraudCheck = performFraudCheck(result);
+            
+            return {
+                ...fileData,
+                ...result,
+                readabilityScore,
+                fraudCheck,
+                status: 'success'
+            };
+        }
+
+        function calculateReadability(extractedFields) {
+            // Simple readability score based on field completeness
+            const fields = typeof extractedFields === 'string' ? 
+                JSON.parse(extractedFields) : extractedFields;
+            
+            let filledFields = 0;
+            let totalFields = 0;
+            
+            if (fields && typeof fields === 'object') {
+                totalFields = Object.keys(fields).length;
+                filledFields = Object.values(fields).filter(value => 
+                    value && value !== 'Not Specified' && value.toString().trim() !== ''
+                ).length;
+            }
+            
+            return totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
+        }
+
+        function performFraudCheck(result) {
+            const alerts = [];
+            const fields = typeof result.extracted_fields === 'string' ? 
+                JSON.parse(result.extracted_fields) : result.extracted_fields;
+            
+            // Check for common fraud indicators
+            if (fields && typeof fields === 'object') {
+                // Check for unusual patterns
+                if (fields['Patient Name'] && fields['Patient Name'].length > 100) {
+                    alerts.push('Unusually long patient name');
+                }
+                
+                if (fields['Age'] && (parseInt(fields['Age']) < 0 || parseInt(fields['Age']) > 150)) {
+                    alerts.push('Invalid age range');
+                }
+                
+                if (fields['Diagnosis'] && fields['Diagnosis'].toLowerCase().includes('test')) {
+                    alerts.push('Test diagnosis detected');
+                }
+                
+                // Check for missing critical fields
+                const criticalFields = ['Patient Name', 'Age', 'Diagnosis'];
+                const missingCritical = criticalFields.filter(field => 
+                    !fields[field] || fields[field] === 'Not Specified'
+                );
+                
+                if (missingCritical.length > 0) {
+                    alerts.push(`Missing critical fields: ${missingCritical.join(', ')}`);
+                }
+            }
+            
+            return {
+                hasAlerts: alerts.length > 0,
+                alerts: alerts,
+                riskLevel: alerts.length > 2 ? 'High' : alerts.length > 0 ? 'Medium' : 'Low'
+            };
+        }
+
+        function showProcessing() {
+            processingOverlay.classList.remove('hidden');
+        }
+
+        function hideProcessing() {
+            processingOverlay.classList.add('hidden');
+        }
+
+        async function adjudicateClaim() {
+            if (uploadedFiles.length === 0) {
+                showNotification('Please upload documents first', 'error');
+                return;
+            }
+            
+            // Show claim details form if hidden
+            if (claimDetailsForm.classList.contains('hidden')) {
+                claimDetailsForm.classList.remove('hidden');
+                return;
+            }
+            
+            showProcessing();
+            processingProgress.textContent = 'Adjudicating claim...';
+            
+            try {
+                const formData = new FormData();
+                
+                // Add files
+                uploadedFiles.forEach(fileData => {
+                    formData.append('files', fileData.file);
+                });
+                
+                // Add claim details
+                const claimId = document.getElementById('claimId').value;
+                const policyNumber = document.getElementById('policyNumber').value;
+                const patientName = document.getElementById('patientName').value;
+                
+                if (claimId) formData.append('claim_id', claimId);
+                if (policyNumber) formData.append('policy_number', policyNumber);
+                if (patientName) formData.append('patient_name', patientName);
+                
+                const response = await fetch('/process-and-adjudicate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                console.log(result);
+
+                // Display adjudication results
+                displayAdjudicationResults(result);
+                
+            } catch (error) {
+                console.error('Adjudication error:', error);
+                showNotification('Claim adjudication failed: ' + error.message, 'error');
+            } finally {
+                hideProcessing();
+                adjudicateClaimBtn.disabled = false;
+            }
+        }
+
+        function displayAdjudicationResults(result) {
+            const adjudicationSection = document.createElement('div');
+            adjudicationSection.className = 'bg-white rounded-lg shadow-md p-6 mb-8 fade-in';
+            adjudicationSection.innerHTML = `
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i data-lucide="gavel" class="w-5 h-5 mr-2 text-green-600"></i>
+                    Claim Adjudication Results
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Claim ID</p>
+                        <p class="text-lg font-semibold text-gray-900">${result.claim_id}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Decision</p>
+                        <p class="text-lg font-semibold ${result.adjudication_result.decision === 'approved' ? 'text-green-600' : result.adjudication_result.decision === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">
+                            ${result.adjudication_result.decision.toUpperCase()}
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Payable Amount</p>
+                        <p class="text-lg font-semibold text-blue-600">Rs. ${result.adjudication_result.payable_amount.toLocaleString()}</p>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <h3 class="text-lg font-semibold mb-3">Processing Summary</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <span class="text-sm text-gray-500">Documents Processed:</span>
+                            <span class="ml-2 font-medium">${result.processing_summary.documents_processed}</span>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500">Document Types:</span>
+                            <span class="ml-2 font-medium">${result.processing_summary.document_types.join(', ')}</span>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500">Processing Time:</span>
+                            <span class="ml-2 font-medium">${result.processing_summary.processing_time.toFixed(2)}s</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h4 class="font-medium text-blue-900 mb-2">Adjudication Reasoning</h4>
+                        <p class="text-sm text-blue-800">${result.adjudication_result.reasoning}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Insert after the upload section
+            const uploadSection = document.querySelector('.bg-white.rounded-lg.shadow-md.p-6.mb-8');
+            uploadSection.parentNode.insertBefore(adjudicationSection, uploadSection.nextSibling);
+            
+            lucide.createIcons();
+            showNotification('Claim adjudicated successfully!', 'success');
+        }
+
+        function displayResults() {
+            resultsSection.classList.remove('hidden');
+            
+            const documentResults = document.getElementById('documentResults');
+            documentResults.innerHTML = processedResults.map(result => `
+                <div class="document-card border rounded-lg p-4 ${result.status === 'error' ? 'border-red-200 bg-red-50' : 'border-gray-200'}">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="${result.status === 'error' ? 'alert-circle' : 'file-text'}" 
+                               class="w-5 h-5 ${result.status === 'error' ? 'text-red-600' : 'text-blue-600'}"></i>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">${result.name}</h4>
+                                <p class="text-sm text-gray-500">${result.document_type || 'Unknown'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            ${result.fraudCheck?.hasAlerts ? `
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                                    Fraud Alert
+                                </span>
+                            ` : ''}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                ${result.status === 'success' ? 'Processed' : 'Error'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    ${result.status === 'error' ? `
+                        <div class="text-red-600 text-sm">${result.error}</div>
+                    ` : `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="font-medium text-gray-700 mb-2">Extracted Fields</h5>
+                                <div class="bg-gray-50 rounded p-3 text-sm">
+                                    ${formatExtractedFields(result.extracted_fields)}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h5 class="font-medium text-gray-700 mb-2">Quality Checks</h5>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Readability:</span>
+                                        <span class="text-sm font-medium ${result.readabilityScore > 80 ? 'text-green-600' : result.readabilityScore > 60 ? 'text-yellow-600' : 'text-red-600'}">
+                                            ${result.readabilityScore}%
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-600">Fraud Risk:</span>
+                                        <span class="text-sm font-medium ${result.fraudCheck?.riskLevel === 'High' ? 'text-red-600' : result.fraudCheck?.riskLevel === 'Medium' ? 'text-yellow-600' : 'text-green-600'}">
+                                            ${result.fraudCheck?.riskLevel || 'Low'}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                ${result.fraudCheck?.hasAlerts ? `
+                                    <div class="mt-2">
+                                        <h6 class="font-medium text-red-700 mb-1">Fraud Alerts:</h6>
+                                        <ul class="text-sm text-red-600 space-y-1">
+                                            ${result.fraudCheck.alerts.map(alert => `<li>• ${alert}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function formatExtractedFields(fields) {
+            try {
+                const parsed = typeof fields === 'string' ? JSON.parse(fields) : fields;
+                if (!parsed || typeof parsed !== 'object') {
+                    return '<span class="text-gray-500">No structured data available</span>';
+                }
+                
+                return Object.entries(parsed)
+                    .filter(([key, value]) => value && value !== 'Not Specified')
+                    .map(([key, value]) => `
+                        <div class="mb-2">
+                            <span class="font-medium text-gray-700">${key}:</span>
+                            <span class="text-gray-900 ml-2">${value}</span>
+                        </div>
+                    `).join('');
+            } catch (e) {
+                return '<span class="text-gray-500">Error parsing field data</span>';
+            }
+        }
+
+        function updateStatistics() {
+            const total = processedResults.length;
+            const successful = processedResults.filter(r => r.status === 'success').length;
+            const fraudAlerts = processedResults.filter(r => r.fraudCheck?.hasAlerts).length;
+            const avgReadability = processedResults
+                .filter(r => r.readabilityScore !== undefined)
+                .reduce((sum, r) => sum + r.readabilityScore, 0) / 
+                processedResults.filter(r => r.readabilityScore !== undefined).length || 0;
+            
+            document.getElementById('totalDocs').textContent = total;
+            document.getElementById('processedDocs').textContent = successful;
+            document.getElementById('fraudAlerts').textContent = fraudAlerts;
+            document.getElementById('avgReadability').textContent = Math.round(avgReadability) + '%';
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 fade-in ${
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' : 
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="${type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info'}" 
+                       class="w-5 h-5"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

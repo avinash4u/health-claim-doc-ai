@@ -1,0 +1,52 @@
+DISCHARGE SUMMARY
+
+Patient Name: John Doe
+Age: 45
+Gender: Male
+UHID / IP Number: UHID123456
+
+Admission Date: 15/03/2024
+Discharge Date: 18/03/2024
+
+Hospital Name: City General Hospital
+Hospital Address: 123 Main Street, Mumbai, Maharashtra
+
+Treating Doctor: Dr. Rajesh Kumar
+
+Diagnosis:
+- Acute myocardial infarction
+- Hypertension
+- Type 2 Diabetes Mellitus
+
+Procedure Performed:
+- Percutaneous Coronary Intervention (PCI) with stent placement
+- Cardiac catheterization
+
+Course in Hospital:
+Patient was admitted with complaints of chest pain and breathlessness. ECG showed ST segment elevation in lead II, III, aVF. Troponin levels were elevated. Emergency PCI was performed on 15/03/2024. Post-procedure course was uneventful. Patient was stable hemodynamically.
+
+Advice on Discharge:
+1. Continue medications as prescribed
+2. Follow-up after 7 days
+3. Avoid heavy exertion for 4 weeks
+4. Cardiac rehabilitation program
+
+Medications on Discharge:
+- Aspirin 75 mg OD
+- Clopidogrel 75 mg OD
+- Atorvastatin 40 mg HS
+- Metoprolol 25 mg BD
+- Ramipril 5 mg OD
+
+Final Bill Details:
+Total Amount: Rs. 2,50,000
+Room Charges: Rs. 45,000
+Doctor Charges: Rs. 80,000
+Pharmacy Charges: Rs. 35,000
+Diagnostics Charges: Rs. 25,000
+Procedure Charges: Rs. 65,000
+
+Bill Number: BILL/2024/1234
+Bill Date: 18/03/2024
+Amount Paid: Rs. 50,000
+Amount Due: Rs. 2,00,000
